@@ -1,0 +1,56 @@
+.page {
+  width: 100%;
+  max-width: 32rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.card {
+  width: 100%;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.row:last-of-type {
+  border-bottom: none;
+}
+
+.label {
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.stats {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin: var(--space-4) 0;
+}
+
+.helperText {
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-4);
+}
+
+.buttonRow {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-4);
+}
+
+.dangerCard :global(.p-card-title) {
+  color: var(--color-danger) !important;
+}

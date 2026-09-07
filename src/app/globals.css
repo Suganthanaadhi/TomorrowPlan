@@ -1,13 +1,43 @@
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --color-bg: #f8f9fb;
+  --color-surface: #ffffff;
+  --color-border: #e4e7ec;
+  --color-border-strong: #d0d5dd;
+  --color-text: #101828;
+  --color-text-muted: #667085;
+  --color-text-faint: #98a2b3;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-primary: #4338ca;
+  --color-primary-hover: #3730a3;
+  --color-primary-soft: #eef2ff;
+
+  --color-success: #12805c;
+  --color-success-soft: #ecfdf5;
+  --color-warning: #b54708;
+  --color-warning-soft: #fffaeb;
+  --color-danger: #b42318;
+  --color-danger-soft: #fef3f2;
+  --color-info: #175cd3;
+  --color-info-soft: #eff8ff;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 2px 8px rgba(16, 24, 40, 0.06), 0 1px 2px rgba(16, 24, 40, 0.04);
+  --shadow-lg: 0 8px 24px rgba(16, 24, 40, 0.08), 0 2px 4px rgba(16, 24, 40, 0.04);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  --font-sans: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
 }
 
 html {
@@ -24,9 +54,11 @@ body {
   min-height: 100%;
   display: flex;
   flex-direction: column;
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -42,8 +74,245 @@ a {
   text-decoration: none;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
-  }
+h1,
+h2,
+h3 {
+  letter-spacing: -0.015em;
+}
+
+/* Restrained, consistent polish for PrimeReact's default surfaces */
+.p-card {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-md) !important;
+  border: 1px solid var(--color-border) !important;
+}
+
+.p-card .p-card-body {
+  padding: 1.5rem !important;
+}
+
+.p-card .p-card-title {
+  font-size: 1.05rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.2rem !important;
+}
+
+.p-card .p-card-subtitle {
+  color: var(--color-text-muted) !important;
+  font-weight: 400 !important;
+  margin-bottom: 1rem !important;
+}
+
+/* Buttons — a small system instead of PrimeReact's flat defaults */
+.p-button {
+  border-radius: var(--radius-sm) !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  letter-spacing: -0.005em;
+  padding: 0.65rem 1.25rem !important;
+  gap: 0.5rem;
+  box-shadow: var(--shadow-sm) !important;
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+    box-shadow 0.15s ease, transform 0.05s ease, opacity 0.15s ease;
+}
+
+.p-button:not(.p-disabled):hover {
+  box-shadow: var(--shadow-md) !important;
+}
+
+.p-button:not(.p-disabled):active {
+  transform: translateY(1px);
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.p-button.p-disabled {
+  opacity: 0.5 !important;
+  box-shadow: none !important;
+}
+
+.p-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--color-primary-soft) !important;
+}
+
+/* Ghost/text buttons carry no shadow at rest — only the tactile press */
+.p-button.p-button-text {
+  box-shadow: none !important;
+}
+
+.p-button.p-button-text:not(.p-disabled):hover {
+  box-shadow: none !important;
+}
+
+/* Secondary reads as an outlined button, not a flat gray block */
+.p-button.p-button-secondary:not(.p-button-text):not(.p-button-outlined) {
+  background: var(--color-surface) !important;
+  border: 1px solid var(--color-border-strong) !important;
+  color: var(--color-text) !important;
+}
+
+.p-button.p-button-secondary:not(.p-button-text):not(.p-button-outlined):not(.p-disabled):hover {
+  background: var(--color-bg) !important;
+  border-color: var(--color-text-faint) !important;
+}
+
+/* Icon-only ghost buttons (row actions) get a compact circular hover target */
+.p-button.p-button-icon-only.p-button-text {
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0 !important;
+  border-radius: 999px !important;
+}
+
+.p-button.p-button-icon-only.p-button-text:not(.p-disabled):hover {
+  background: var(--color-bg) !important;
+}
+
+.p-button.p-button-icon-only.p-button-text.p-button-danger:not(.p-disabled):hover {
+  background: var(--color-danger-soft) !important;
+}
+
+.p-button.p-button-icon-only.p-button-text.p-button-info:not(.p-disabled):hover,
+.p-button.p-button-icon-only.p-button-text.p-button-success:not(.p-disabled):hover {
+  background: var(--color-primary-soft) !important;
+}
+
+.p-inputtext:focus,
+.p-password-input:focus {
+  box-shadow: 0 0 0 3px var(--color-primary-soft) !important;
+}
+
+/* Password's show/hide icon is a flex sibling of the input; the flex
+   container's default align-items:stretch squashes the icon toward the
+   bottom instead of centering it — force vertical centering explicitly,
+   and reserve room inside the input so the icon sits inset, not floating
+   outside the bordered box. */
+.p-password {
+  align-items: center !important;
+  width: 100%;
+  position: relative;
+}
+
+.p-password-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  padding-right: 2.5rem !important;
+}
+
+.p-password-show-icon,
+.p-password-hide-icon {
+  flex-shrink: 0;
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-faint);
+}
+
+/* The global margin/padding reset above strips PrimeReact's own spacing
+   between its month/year picker buttons ("September2026") — restore it. */
+.p-datepicker-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Message banners default to inline-flex (shrink-to-fit) with no gap between
+   the icon and text — make them full-width block banners that wrap cleanly */
+.p-inline-message {
+  display: flex !important;
+  width: 100%;
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  gap: 0.6rem;
+  padding: 0.75rem 1rem !important;
+  border-radius: var(--radius-sm) !important;
+  text-align: left;
+}
+
+.p-inline-message-icon {
+  margin-top: 0.1rem;
+}
+
+.p-inline-message-text {
+  line-height: 1.4;
+}
+
+/* Subtle dot-grid texture so empty canvas reads as deliberate, not blank */
+.bg-dot-grid {
+  background-image: radial-gradient(var(--color-border-strong) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+.p-tag {
+  border-radius: 999px !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  padding: 0.3rem 0.7rem !important;
+}
+
+/* Dialog / ConfirmDialog — match the app's card system instead of
+   PrimeReact's cramped, sharp-cornered default */
+.p-dialog {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: var(--shadow-lg) !important;
+  border: 1px solid var(--color-border);
+  overflow: hidden;
+}
+
+.p-dialog-mask {
+  background: rgba(16, 24, 40, 0.5) !important;
+}
+
+.p-dialog-header {
+  padding: 1.25rem 1.5rem 0.5rem !important;
+  gap: 0.75rem;
+}
+
+.p-dialog-header .p-dialog-title {
+  font-size: 1.05rem !important;
+  font-weight: 700 !important;
+}
+
+.p-dialog-content {
+  padding: 0.5rem 1.5rem 1.25rem !important;
+  color: var(--color-text-muted);
+}
+
+.p-dialog-footer {
+  padding: 0 1.5rem 1.5rem !important;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+.p-dialog-header-icon {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  color: var(--color-text-faint);
+}
+
+.p-dialog-header-icon:hover {
+  background: var(--color-bg) !important;
+  color: var(--color-text) !important;
+}
+
+.p-confirm-dialog .p-dialog-content {
+  display: flex;
+  align-items: flex-start;
+}
+
+.p-confirm-dialog .p-confirm-dialog-icon {
+  font-size: 1.5rem;
+  color: var(--color-danger);
+  margin-right: 0.75rem;
+  margin-top: 0.1rem;
+  flex-shrink: 0;
+}
+
+.p-confirm-dialog .p-confirm-dialog-message {
+  line-height: 1.5;
+  color: var(--color-text);
 }
