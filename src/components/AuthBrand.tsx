@@ -6,6 +6,7 @@ const FEATURES = [
   { icon: "pi pi-chart-line", text: "See your completion history on a calendar" },
 ];
 
+
 export function AuthBrandPanel() {
   return (
     <div className={styles.brandPanel}>
