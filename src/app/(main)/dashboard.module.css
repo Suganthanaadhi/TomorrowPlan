@@ -1,0 +1,62 @@
+.page {
+  width: 100%;
+  max-width: 40rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.heading {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.subheading {
+  color: var(--color-text-muted);
+  margin-top: var(--space-1);
+}
+
+.card {
+  width: 100%;
+}
+
+.overdueCard :global(.p-card-title) {
+  color: var(--color-warning) !important;
+}
+
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-faint);
+  text-align: center;
+  padding: var(--space-6) 0;
+}
+
+.empty .pi {
+  font-size: 1.5rem;
+}
+
+.empty a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.empty a:hover {
+  text-decoration: underline;
+}
+
+.spinnerWrap {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 0;
+  width: 100%;
+}
