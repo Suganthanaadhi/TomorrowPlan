@@ -52,20 +52,23 @@ export async function GET(request: NextRequest) {
     });
     if (tasksToday.length === 0) continue;
 
-    for (const task of tasksToday) {
-      const payload = JSON.stringify({ title: "TomorrowPlan", body: task.text });
-      for (const sub of user.subscriptions) {
-        try {
-          await webpush.sendNotification(
-            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-            payload,
-          );
-          sent++;
-        } catch (err) {
-          const statusCode = (err as { statusCode?: number }).statusCode;
-          if (statusCode === 404 || statusCode === 410) {
-            await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
-          }
+    const body =
+      tasksToday.length === 1
+        ? tasksToday[0].text
+        : `Today: ${tasksToday.map((t) => t.text).join(", ")}`;
+    const payload = JSON.stringify({ title: "TomorrowPlan", body });
+
+    for (const sub of user.subscriptions) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          payload,
+        );
+        sent++;
+      } catch (err) {
+        const statusCode = (err as { statusCode?: number }).statusCode;
+        if (statusCode === 404 || statusCode === 410) {
+          await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
         }
       }
     }

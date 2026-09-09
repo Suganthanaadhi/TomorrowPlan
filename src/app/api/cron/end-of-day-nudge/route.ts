@@ -51,10 +51,19 @@ export async function GET(request: NextRequest) {
     });
     if (pendingCount === 0) continue;
 
-    const payload = JSON.stringify({
-      title: "TomorrowPlan",
-      body: `You still have ${pendingCount} task${pendingCount === 1 ? "" : "s"} pending today — tick, move, or clear them out.`,
+    const tomorrowDate = new Date(todayDate);
+    tomorrowDate.setUTCDate(tomorrowDate.getUTCDate() + 1);
+    const tomorrowPlannedCount = await prisma.task.count({
+      where: { userId: user.id, date: tomorrowDate },
     });
+
+    let body = `You still have ${pendingCount} task${pendingCount === 1 ? "" : "s"} pending today — tick, move, or clear them out.`;
+    body +=
+      tomorrowPlannedCount === 0
+        ? " Also, you haven't planned tomorrow yet — add a few tasks before you wrap up."
+        : ` You've already planned ${tomorrowPlannedCount} task${tomorrowPlannedCount === 1 ? "" : "s"} for tomorrow.`;
+
+    const payload = JSON.stringify({ title: "TomorrowPlan", body });
 
     for (const sub of user.subscriptions) {
       try {
