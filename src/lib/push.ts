@@ -23,7 +23,11 @@ export async function enablePushReminders(vapidPublicKey: string): Promise<void>
   if (permission !== "granted") {
     throw new Error("Notification permission was not granted");
   }
-  const registration = await navigator.serviceWorker.register("/sw.js");
+  await navigator.serviceWorker.register("/sw.js");
+  // .register() resolves once installation *starts* — the worker may still be
+  // installing/waiting, not yet active, which makes pushManager.subscribe()
+  // fail with "no active Service Worker". .ready waits for activation.
+  const registration = await navigator.serviceWorker.ready;
   const subscription = await registration.pushManager.subscribe({
     userVisibleOnly: true,
     applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as BufferSource,

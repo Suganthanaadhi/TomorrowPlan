@@ -15,8 +15,10 @@ model User {
   timezone     String   @default("UTC")
   createdAt    DateTime @default(now())
 
-  tasks       Task[]
-  resetTokens PasswordResetToken[]
+  tasks         Task[]
+  resetTokens   PasswordResetToken[]
+  subscriptions PushSubscription[]
+  reminders     ReminderLog[]
 }
 
 enum TaskStatus {
@@ -47,4 +49,25 @@ model PasswordResetToken {
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+}
+
+// Prevents sending the same day's reminder twice if the cron fires more than once
+model ReminderLog {
+  id     String   @id @default(cuid())
+  userId String
+  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date   DateTime @db.Date
+  sentAt DateTime @default(now())
+
+  @@unique([userId, date])
 }

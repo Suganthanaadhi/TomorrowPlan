@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { forgotPasswordSchema } from "@/lib/validation";
+import { sendPasswordResetEmail } from "@/lib/email";
 
-// TEMPORARY: no email service is wired up yet, so instead of sending a real
-// email, the reset link is logged to the server console. Swap this for
-// Resend once that's ready — the route's request/response shape won't change.
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   const result = forgotPasswordSchema.safeParse(body);
@@ -19,7 +17,7 @@ export async function POST(request: NextRequest) {
       data: { userId: user.id, token, expiresAt: new Date(Date.now() + 60 * 60 * 1000) },
     });
     const origin = request.nextUrl.origin;
-    console.log(`[mock email] Password reset for ${user.email}: ${origin}/reset-password?token=${token}`);
+    await sendPasswordResetEmail(user.email, `${origin}/reset-password?token=${token}`);
   }
 
   // Always return success, whether or not the email exists, so the response
