@@ -52,7 +52,7 @@ export const taskUpdateSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
-  status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED"]).optional(),
+  status: z.enum(["PENDING", "COMPLETED"]).optional(),
   notify: z.boolean().optional(),
 });
 

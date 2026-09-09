@@ -19,7 +19,6 @@ export default function HistoryPage() {
 
   const completed = tasks.filter((t) => t.status === "COMPLETED").length;
   const pending = tasks.filter((t) => t.status === "PENDING").length;
-  const inProgress = tasks.filter((t) => t.status === "IN_PROGRESS").length;
 
   return (
     <div className={styles.page}>
@@ -57,7 +56,6 @@ export default function HistoryPage() {
             <>
               <div className={styles.summary}>
                 <Tag value={`${completed} completed`} severity="success" />
-                <Tag value={`${inProgress} in progress`} severity="info" />
                 <Tag value={`${pending} pending`} severity="warning" />
               </div>
               <ul className={styles.list}>

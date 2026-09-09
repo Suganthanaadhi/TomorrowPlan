@@ -8,7 +8,7 @@ const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT ?? "mailto:example@example.com";
 
-// "End of day nudge": if the user still has pending/in-progress tasks for
+// "End of day nudge": if the user still has pending tasks for
 // *today* by their preferred end-of-day time, sends one reminder so nothing
 // quietly falls through — tapping it opens the app to Dashboard, where they
 // can tick, move to tomorrow, or delete each one directly.

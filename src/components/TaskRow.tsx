@@ -11,15 +11,13 @@ import { toISODate } from "@/lib/date";
 import { useNotify } from "@/components/ToastProvider";
 import styles from "./TaskRow.module.css";
 
-const STATUS_SEQUENCE: TaskStatus[] = ["PENDING", "IN_PROGRESS", "COMPLETED"];
+const STATUS_SEQUENCE: TaskStatus[] = ["PENDING", "COMPLETED"];
 const STATUS_LABEL: Record<TaskStatus, string> = {
   PENDING: "Pending",
-  IN_PROGRESS: "In progress",
   COMPLETED: "Completed",
 };
-const STATUS_SEVERITY: Record<TaskStatus, "warning" | "info" | "success"> = {
+const STATUS_SEVERITY: Record<TaskStatus, "warning" | "success"> = {
   PENDING: "warning",
-  IN_PROGRESS: "info",
   COMPLETED: "success",
 };
 
