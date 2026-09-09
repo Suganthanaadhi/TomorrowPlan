@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
 
   let sent = 0;
   let skipped = 0;
+  const errors: unknown[] = [];
 
   for (const user of users) {
     if (user.subscriptions.length === 0) continue;
@@ -67,6 +68,9 @@ export async function GET(request: NextRequest) {
         sent++;
       } catch (err) {
         const statusCode = (err as { statusCode?: number }).statusCode;
+        const errBody = (err as { body?: string }).body;
+        console.error("send-reminders push failed", statusCode, errBody);
+        errors.push({ statusCode, body: errBody, message: (err as Error).message });
         if (statusCode === 404 || statusCode === 410) {
           await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
         }
@@ -78,5 +82,5 @@ export async function GET(request: NextRequest) {
     });
   }
 
-  return NextResponse.json({ ok: true, sent, skipped });
+  return NextResponse.json({ ok: true, sent, skipped, errors });
 }
