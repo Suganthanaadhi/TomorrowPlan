@@ -8,10 +8,10 @@ const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
 const VAPID_SUBJECT = process.env.VAPID_SUBJECT ?? "mailto:example@example.com";
 
-// "Plan reminder": tells the user what they planned for *today*, once per
-// day, at their own preferred time (User.planReminderTime). Call this
-// endpoint often (e.g. every 15-30 min via an external cron pinger) for the
-// per-user time to actually be honored — see reminder-time.ts.
+// "End of day nudge": if the user still has pending/in-progress tasks for
+// *today* by their preferred end-of-day time, sends one reminder so nothing
+// quietly falls through — tapping it opens the app to Dashboard, where they
+// can tick, move to tomorrow, or delete each one directly.
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
   const users = await prisma.user.findMany({
-    where: { planReminderEnabled: true },
+    where: { endOfDayReminderEnabled: true },
     include: { subscriptions: true },
   });
 
@@ -33,45 +33,46 @@ export async function GET(request: NextRequest) {
 
   for (const user of users) {
     if (user.subscriptions.length === 0) continue;
-    if (!isWithinWindow(currentTimeInTimezone(user.timezone), user.planReminderTime)) continue;
+    if (!isWithinWindow(currentTimeInTimezone(user.timezone), user.endOfDayReminderTime)) continue;
 
     const todayStr = todayInTimezone(user.timezone);
     const todayDate = toDbDate(todayStr);
 
     const alreadySent = await prisma.reminderLog.findUnique({
-      where: { userId_date_kind: { userId: user.id, date: todayDate, kind: "PLAN" } },
+      where: { userId_date_kind: { userId: user.id, date: todayDate, kind: "END_OF_DAY" } },
     });
     if (alreadySent) {
       skipped++;
       continue;
     }
 
-    const tasksToday = await prisma.task.findMany({
-      where: { userId: user.id, date: todayDate, notify: true },
-      orderBy: { createdAt: "asc" },
+    const pendingCount = await prisma.task.count({
+      where: { userId: user.id, date: todayDate, status: { not: "COMPLETED" } },
     });
-    if (tasksToday.length === 0) continue;
+    if (pendingCount === 0) continue;
 
-    for (const task of tasksToday) {
-      const payload = JSON.stringify({ title: "TomorrowPlan", body: task.text });
-      for (const sub of user.subscriptions) {
-        try {
-          await webpush.sendNotification(
-            { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-            payload,
-          );
-          sent++;
-        } catch (err) {
-          const statusCode = (err as { statusCode?: number }).statusCode;
-          if (statusCode === 404 || statusCode === 410) {
-            await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
-          }
+    const payload = JSON.stringify({
+      title: "TomorrowPlan",
+      body: `You still have ${pendingCount} task${pendingCount === 1 ? "" : "s"} pending today — tick, move, or clear them out.`,
+    });
+
+    for (const sub of user.subscriptions) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+          payload,
+        );
+        sent++;
+      } catch (err) {
+        const statusCode = (err as { statusCode?: number }).statusCode;
+        if (statusCode === 404 || statusCode === 410) {
+          await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
         }
       }
     }
 
     await prisma.reminderLog.create({
-      data: { userId: user.id, date: todayDate, kind: "PLAN" },
+      data: { userId: user.id, date: todayDate, kind: "END_OF_DAY" },
     });
   }
 

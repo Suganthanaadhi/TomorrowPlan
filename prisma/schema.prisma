@@ -15,6 +15,12 @@ model User {
   timezone     String   @default("UTC")
   createdAt    DateTime @default(now())
 
+  // Reminder preferences — "HH:mm" in the user's own timezone
+  planReminderEnabled     Boolean @default(true)
+  planReminderTime        String  @default("07:30")
+  endOfDayReminderEnabled Boolean @default(true)
+  endOfDayReminderTime    String  @default("20:00")
+
   tasks         Task[]
   resetTokens   PasswordResetToken[]
   subscriptions PushSubscription[]
@@ -61,13 +67,19 @@ model PushSubscription {
   createdAt DateTime @default(now())
 }
 
+enum ReminderKind {
+  PLAN
+  END_OF_DAY
+}
+
 // Prevents sending the same day's reminder twice if the cron fires more than once
 model ReminderLog {
-  id     String   @id @default(cuid())
+  id     String       @id @default(cuid())
   userId String
-  user   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  date   DateTime @db.Date
-  sentAt DateTime @default(now())
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind   ReminderKind @default(PLAN)
+  date   DateTime     @db.Date
+  sentAt DateTime     @default(now())
 
-  @@unique([userId, date])
+  @@unique([userId, date, kind])
 }

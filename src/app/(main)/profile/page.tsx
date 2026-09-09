@@ -5,12 +5,15 @@ import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Card } from "primereact/card";
 import { Button } from "primereact/button";
+import { InputText } from "primereact/inputtext";
 import { Tag } from "primereact/tag";
+import { InputSwitch } from "primereact/inputswitch";
 import { ConfirmDialog, confirmDialog } from "primereact/confirmdialog";
 import { ProgressSpinner } from "primereact/progressspinner";
 import { useNotify } from "@/components/ToastProvider";
 import { useAllTasks } from "@/hooks/useTasks";
-import { deleteAccount, updateProfile } from "@/lib/api";
+import { useProfile, useUpdateProfile } from "@/hooks/useProfile";
+import { deleteAccount } from "@/lib/api";
 import { detectTimezone } from "@/lib/date";
 import {
   disablePushReminders,
@@ -27,11 +30,26 @@ export default function ProfilePage() {
   const notify = useNotify();
   const router = useRouter();
   const tasksQuery = useAllTasks();
+  const profileQuery = useProfile();
+  const updateProfileMutation = useUpdateProfile();
 
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushBusy, setPushBusy] = useState(false);
+
+  const [username, setUsername] = useState<string | null>(null);
+  const [savingUsername, setSavingUsername] = useState(false);
+
   const [timezone, setTimezone] = useState<string | null>(null);
   const [savingTimezone, setSavingTimezone] = useState(false);
+
+  const [planEnabled, setPlanEnabled] = useState(true);
+  const [planTime, setPlanTime] = useState("07:30");
+  const [savingPlan, setSavingPlan] = useState(false);
+
+  const [eodEnabled, setEodEnabled] = useState(true);
+  const [eodTime, setEodTime] = useState("20:00");
+  const [savingEod, setSavingEod] = useState(false);
+
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
@@ -39,10 +57,14 @@ export default function ProfilePage() {
   }, []);
 
   useEffect(() => {
-    if (session?.user?.timezone && timezone === null) {
-      setTimezone(session.user.timezone);
-    }
-  }, [session, timezone]);
+    if (!profileQuery.data) return;
+    if (username === null) setUsername(profileQuery.data.username);
+    if (timezone === null) setTimezone(profileQuery.data.timezone);
+    setPlanEnabled(profileQuery.data.planReminderEnabled);
+    setPlanTime(profileQuery.data.planReminderTime);
+    setEodEnabled(profileQuery.data.endOfDayReminderEnabled);
+    setEodTime(profileQuery.data.endOfDayReminderTime);
+  }, [profileQuery.data, username, timezone]);
 
   const handleError = (err: unknown) =>
     notify(err instanceof Error ? err.message : "Something went wrong", "error");
@@ -69,17 +91,61 @@ export default function ProfilePage() {
     }
   };
 
+  const saveUsername = async () => {
+    if (!username || !username.trim()) return;
+    setSavingUsername(true);
+    try {
+      await updateProfileMutation.mutateAsync({ username: username.trim() });
+      await updateSession({ username: username.trim() });
+      notify("Username updated");
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setSavingUsername(false);
+    }
+  };
+
   const saveTimezone = async () => {
     if (!timezone) return;
     setSavingTimezone(true);
     try {
-      await updateProfile({ timezone });
+      await updateProfileMutation.mutateAsync({ timezone });
       await updateSession({ timezone });
       notify("Timezone updated");
     } catch (err) {
       handleError(err);
     } finally {
       setSavingTimezone(false);
+    }
+  };
+
+  const savePlanReminder = async () => {
+    setSavingPlan(true);
+    try {
+      await updateProfileMutation.mutateAsync({
+        planReminderEnabled: planEnabled,
+        planReminderTime: planTime,
+      });
+      notify("Plan reminder saved");
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setSavingPlan(false);
+    }
+  };
+
+  const saveEodReminder = async () => {
+    setSavingEod(true);
+    try {
+      await updateProfileMutation.mutateAsync({
+        endOfDayReminderEnabled: eodEnabled,
+        endOfDayReminderTime: eodTime,
+      });
+      notify("End-of-day reminder saved");
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setSavingEod(false);
     }
   };
 
@@ -117,10 +183,24 @@ export default function ProfilePage() {
       <h1 className={styles.heading}>Profile</h1>
 
       <Card title="Account" className={styles.card}>
-        <div className={styles.row}>
-          <span className={styles.label}>Username</span>
-          <span>{session?.user?.username}</span>
+        <div className={styles.field}>
+          <label htmlFor="username">Username</label>
+          <div className={styles.inlineRow}>
+            <InputText
+              id="username"
+              value={username ?? ""}
+              onChange={(e) => setUsername(e.target.value)}
+              className={styles.inlineInput}
+            />
+            <Button
+              icon="pi pi-check"
+              onClick={saveUsername}
+              loading={savingUsername}
+              aria-label="Save username"
+            />
+          </div>
         </div>
+
         <div className={styles.row}>
           <span className={styles.label}>Email</span>
           <span>{session?.user?.email}</span>
@@ -148,10 +228,10 @@ export default function ProfilePage() {
         </div>
       </Card>
 
-      <Card title="Reminders" className={styles.card}>
+      <Card title="Push notifications" className={styles.card}>
         <p className={styles.helperText}>
           {isPushSupported()
-            ? "Get a push notification when it's time to work through tomorrow's plan."
+            ? "Turn this on to actually receive the reminders below as OS notifications on this device."
             : "Push notifications aren't supported in this browser."}
         </p>
         <div className={styles.buttonRow}>
@@ -167,10 +247,50 @@ export default function ProfilePage() {
         </div>
       </Card>
 
+      <Card title="Plan reminder" className={styles.card}>
+        <p className={styles.helperText}>
+          Tells you what you planned for today, at whatever time you set below.
+        </p>
+        <div className={styles.reminderRow}>
+          <InputSwitch checked={planEnabled} onChange={(e) => setPlanEnabled(!!e.value)} />
+          <input
+            type="time"
+            value={planTime}
+            onChange={(e) => setPlanTime(e.target.value)}
+            disabled={!planEnabled}
+            className={styles.timeInput}
+          />
+          <Button
+            label="Save"
+            icon="pi pi-check"
+            onClick={savePlanReminder}
+            loading={savingPlan}
+          />
+        </div>
+      </Card>
+
+      <Card title="End-of-day reminder" className={styles.card}>
+        <p className={styles.helperText}>
+          If tasks are still pending late in the day, nudges you to tick, move, or delete them
+          before the day ends.
+        </p>
+        <div className={styles.reminderRow}>
+          <InputSwitch checked={eodEnabled} onChange={(e) => setEodEnabled(!!e.value)} />
+          <input
+            type="time"
+            value={eodTime}
+            onChange={(e) => setEodTime(e.target.value)}
+            disabled={!eodEnabled}
+            className={styles.timeInput}
+          />
+          <Button label="Save" icon="pi pi-check" onClick={saveEodReminder} loading={savingEod} />
+        </div>
+      </Card>
+
       <Card title="Timezone" className={styles.card}>
         <p className={styles.helperText}>
-          Used to figure out when &ldquo;today&rdquo; and &ldquo;tomorrow&rdquo; start for
-          your reminders.
+          Used to figure out when &ldquo;today&rdquo; starts, and when your reminder times above
+          are checked.
         </p>
         <div className={styles.row}>
           <span className={styles.label}>Current</span>

@@ -43,6 +43,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       if (trigger === "update" && session?.timezone) {
         token.timezone = session.timezone;
       }
+      if (trigger === "update" && session?.username) {
+        token.username = session.username;
+      }
       return token;
     },
     async session({ session, token }) {

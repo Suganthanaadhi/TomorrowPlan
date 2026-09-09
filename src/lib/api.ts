@@ -98,7 +98,28 @@ export function deleteAccount() {
   return request<{ ok: true }>("/api/account", { method: "DELETE" });
 }
 
-export function updateProfile(data: { timezone?: string }) {
+export type ProfileSettings = {
+  username: string;
+  email: string;
+  timezone: string;
+  planReminderEnabled: boolean;
+  planReminderTime: string;
+  endOfDayReminderEnabled: boolean;
+  endOfDayReminderTime: string;
+};
+
+export function fetchProfile() {
+  return request<ProfileSettings>("/api/account");
+}
+
+export function updateProfile(data: {
+  username?: string;
+  timezone?: string;
+  planReminderEnabled?: boolean;
+  planReminderTime?: string;
+  endOfDayReminderEnabled?: boolean;
+  endOfDayReminderTime?: string;
+}) {
   return request<{ ok: true }>("/api/account", {
     method: "PATCH",
     body: JSON.stringify(data),

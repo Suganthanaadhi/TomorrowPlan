@@ -55,3 +55,14 @@ export const taskUpdateSchema = z.object({
   status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED"]).optional(),
   notify: z.boolean().optional(),
 });
+
+const timeString = z.string().regex(/^([01]\d|2[0-3]):([0-5]\d)$/, "Use HH:mm");
+
+export const updateProfileSchema = z.object({
+  username: z.string().trim().min(3, "At least 3 characters").max(32).optional(),
+  timezone: z.string().min(1).optional(),
+  planReminderEnabled: z.boolean().optional(),
+  planReminderTime: timeString.optional(),
+  endOfDayReminderEnabled: z.boolean().optional(),
+  endOfDayReminderTime: timeString.optional(),
+});
