@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createUser, findUserByEmail, findUserByUsername } from "@/lib/mock-users";
+import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
 import { registerApiSchema } from "@/lib/validation";
 
 export async function POST(request: NextRequest) {
@@ -11,13 +12,21 @@ export async function POST(request: NextRequest) {
 
   const { username, email, password, timezone } = result.data;
 
-  if (findUserByUsername(username)) {
-    return NextResponse.json({ error: "That username is already taken" }, { status: 409 });
-  }
-  if (findUserByEmail(email)) {
-    return NextResponse.json({ error: "That email is already registered" }, { status: 409 });
+  const existing = await prisma.user.findFirst({
+    where: { OR: [{ username }, { email }] },
+  });
+  if (existing) {
+    const field = existing.username === username ? "username" : "email";
+    return NextResponse.json(
+      { error: field === "username" ? "That username is already taken" : "That email is already registered" },
+      { status: 409 },
+    );
   }
 
-  createUser({ username, email, password, timezone });
+  const passwordHash = await bcrypt.hash(password, 10);
+  await prisma.user.create({
+    data: { username, email, passwordHash, timezone },
+  });
+
   return NextResponse.json({ ok: true }, { status: 201 });
 }

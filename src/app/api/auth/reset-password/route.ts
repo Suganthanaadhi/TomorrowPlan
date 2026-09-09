@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { consumeResetToken, updatePassword } from "@/lib/mock-users";
+import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
 import { resetPasswordSchema } from "@/lib/validation";
 
 export async function POST(request: NextRequest) {
@@ -9,14 +10,27 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: result.error.issues[0]?.message }, { status: 400 });
   }
 
-  const user = consumeResetToken(result.data.token);
-  if (!user) {
+  const resetToken = await prisma.passwordResetToken.findUnique({
+    where: { token: result.data.token },
+  });
+  if (!resetToken || resetToken.usedAt || resetToken.expiresAt < new Date()) {
     return NextResponse.json(
       { error: "This reset link is invalid or has expired" },
       { status: 400 },
     );
   }
 
-  updatePassword(user.id, result.data.password);
+  const passwordHash = await bcrypt.hash(result.data.password, 10);
+  await prisma.$transaction([
+    prisma.user.update({
+      where: { id: resetToken.userId },
+      data: { passwordHash },
+    }),
+    prisma.passwordResetToken.update({
+      where: { id: resetToken.id },
+      data: { usedAt: new Date() },
+    }),
+  ]);
+
   return NextResponse.json({ ok: true });
 }

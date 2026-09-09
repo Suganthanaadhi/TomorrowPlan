@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { createTask, listAllTasks, listTasksByDate } from "@/lib/mock-store";
+import { prisma } from "@/lib/prisma";
+import { serializeTask, toDbDate } from "@/lib/serialize";
 import { taskCreateSchema } from "@/lib/validation";
 
 export async function GET(request: NextRequest) {
@@ -8,10 +9,14 @@ export async function GET(request: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const date = request.nextUrl.searchParams.get("date");
-  const tasks = date
-    ? listTasksByDate(session.user.id, date)
-    : listAllTasks(session.user.id);
-  return NextResponse.json(tasks);
+  const tasks = await prisma.task.findMany({
+    where: {
+      userId: session.user.id,
+      ...(date ? { date: toDbDate(date) } : {}),
+    },
+    orderBy: { createdAt: "asc" },
+  });
+  return NextResponse.json(tasks.map(serializeTask));
 }
 
 export async function POST(request: NextRequest) {
@@ -24,6 +29,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: result.error.issues[0]?.message }, { status: 400 });
   }
 
-  const task = createTask(session.user.id, result.data);
-  return NextResponse.json(task, { status: 201 });
+  const task = await prisma.task.create({
+    data: {
+      userId: session.user.id,
+      text: result.data.text,
+      date: toDbDate(result.data.date),
+      notify: result.data.notify ?? false,
+    },
+  });
+  return NextResponse.json(serializeTask(task), { status: 201 });
 }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { deleteTask, updateTask } from "@/lib/mock-store";
+import { prisma } from "@/lib/prisma";
+import { serializeTask, toDbDate } from "@/lib/serialize";
 import { taskUpdateSchema } from "@/lib/validation";
 
 export async function PATCH(
@@ -17,9 +18,15 @@ export async function PATCH(
     return NextResponse.json({ error: result.error.issues[0]?.message }, { status: 400 });
   }
 
-  const task = updateTask(session.user.id, id, result.data);
-  if (!task) return NextResponse.json({ error: "Task not found" }, { status: 404 });
-  return NextResponse.json(task);
+  const existing = await prisma.task.findFirst({ where: { id, userId: session.user.id } });
+  if (!existing) return NextResponse.json({ error: "Task not found" }, { status: 404 });
+
+  const { date, ...rest } = result.data;
+  const task = await prisma.task.update({
+    where: { id },
+    data: { ...rest, ...(date ? { date: toDbDate(date) } : {}) },
+  });
+  return NextResponse.json(serializeTask(task));
 }
 
 export async function DELETE(
@@ -30,7 +37,9 @@ export async function DELETE(
   if (!session?.user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const { id } = await params;
-  const removed = deleteTask(session.user.id, id);
-  if (!removed) return NextResponse.json({ error: "Task not found" }, { status: 404 });
+  const existing = await prisma.task.findFirst({ where: { id, userId: session.user.id } });
+  if (!existing) return NextResponse.json({ error: "Task not found" }, { status: 404 });
+
+  await prisma.task.delete({ where: { id } });
   return new NextResponse(null, { status: 204 });
 }

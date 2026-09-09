@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createResetToken, findUserByEmail } from "@/lib/mock-users";
+import { prisma } from "@/lib/prisma";
 import { forgotPasswordSchema } from "@/lib/validation";
 
 // TEMPORARY: no email service is wired up yet, so instead of sending a real
@@ -12,9 +12,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: result.error.issues[0]?.message }, { status: 400 });
   }
 
-  const user = findUserByEmail(result.data.email);
+  const user = await prisma.user.findUnique({ where: { email: result.data.email } });
   if (user) {
-    const token = createResetToken(user.id);
+    const token = crypto.randomUUID();
+    await prisma.passwordResetToken.create({
+      data: { userId: user.id, token, expiresAt: new Date(Date.now() + 60 * 60 * 1000) },
+    });
     const origin = request.nextUrl.origin;
     console.log(`[mock email] Password reset for ${user.email}: ${origin}/reset-password?token=${token}`);
   }
