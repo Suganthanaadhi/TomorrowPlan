@@ -82,10 +82,6 @@ function LoginForm() {
           <MobileAuthBrand />
           <Card title="Log in" subTitle="Welcome back — pick up where you left off.">
             <form onSubmit={handleSubmit} className={styles.form}>
-              <Message
-                severity="info"
-                text="Demo login: username 'demo', password 'demo1234'"
-              />
               {justRegistered && (
                 <Message severity="success" text="Account created — log in below." />
               )}

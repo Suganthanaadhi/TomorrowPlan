@@ -158,8 +158,8 @@ h3 {
 
 /* Icon-only ghost buttons (row actions) get a compact circular hover target */
 .p-button.p-button-icon-only.p-button-text {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.5rem;
+  height: 2.5rem;
   padding: 0 !important;
   border-radius: 999px !important;
 }

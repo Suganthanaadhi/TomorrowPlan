@@ -92,11 +92,19 @@ export default function ProfilePage() {
   };
 
   const saveUsername = async () => {
-    if (!username || !username.trim()) return;
+    const trimmed = username?.trim() ?? "";
+    if (!trimmed) {
+      notify("Username can't be empty", "warn");
+      return;
+    }
+    if (trimmed.length < 3) {
+      notify("Username must be at least 3 characters", "warn");
+      return;
+    }
     setSavingUsername(true);
     try {
-      await updateProfileMutation.mutateAsync({ username: username.trim() });
-      await updateSession({ username: username.trim() });
+      await updateProfileMutation.mutateAsync({ username: trimmed });
+      await updateSession({ username: trimmed });
       notify("Username updated");
     } catch (err) {
       handleError(err);
@@ -106,7 +114,10 @@ export default function ProfilePage() {
   };
 
   const saveTimezone = async () => {
-    if (!timezone) return;
+    if (!timezone) {
+      notify("Timezone isn't loaded yet — try again in a moment", "warn");
+      return;
+    }
     setSavingTimezone(true);
     try {
       await updateProfileMutation.mutateAsync({ timezone });
@@ -182,7 +193,7 @@ export default function ProfilePage() {
 
       <h1 className={styles.heading}>Profile</h1>
 
-      <Card title="Account" className={styles.card}>
+      <Card title="Account" className={`${styles.card} ${styles.fullWidth}`}>
         <div className={styles.field}>
           <label htmlFor="username">Username</label>
           <div className={styles.inlineRow}>
@@ -312,7 +323,10 @@ export default function ProfilePage() {
         </div>
       </Card>
 
-      <Card title="Danger zone" className={`${styles.card} ${styles.dangerCard}`}>
+      <Card
+        title="Danger zone"
+        className={`${styles.card} ${styles.dangerCard} ${styles.fullWidth}`}
+      >
         <div className={styles.buttonRow}>
           <Button
             label="Delete account"

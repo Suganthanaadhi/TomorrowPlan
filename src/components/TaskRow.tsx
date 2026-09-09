@@ -8,6 +8,7 @@ import { OverlayPanel } from "primereact/overlaypanel";
 import { Calendar } from "primereact/calendar";
 import type { Task, TaskStatus } from "@/lib/types";
 import { toISODate } from "@/lib/date";
+import { useNotify } from "@/components/ToastProvider";
 import styles from "./TaskRow.module.css";
 
 const STATUS_SEQUENCE: TaskStatus[] = ["PENDING", "IN_PROGRESS", "COMPLETED"];
@@ -48,6 +49,7 @@ export function TaskRow({
   const [isEditing, setIsEditing] = useState(false);
   const [draft, setDraft] = useState(task.text);
   const movePanelRef = useRef<OverlayPanel>(null);
+  const notify = useNotify();
 
   const cycleStatus = () => {
     if (!onCycleStatus) return;
@@ -56,26 +58,26 @@ export function TaskRow({
     onCycleStatus(next);
   };
 
+  const saveEdit = () => {
+    if (draft.trim()) {
+      onSaveEdit?.(draft.trim());
+      setIsEditing(false);
+    } else {
+      notify("Task text can't be empty", "warn");
+    }
+  };
+
   if (isEditing) {
     return (
       <li className={styles.row}>
         <InputText
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && saveEdit()}
           className={styles.editInput}
           autoFocus
         />
-        <Button
-          icon="pi pi-check"
-          severity="success"
-          text
-          onClick={() => {
-            if (draft.trim()) {
-              onSaveEdit?.(draft.trim());
-              setIsEditing(false);
-            }
-          }}
-        />
+        <Button icon="pi pi-check" severity="success" text onClick={saveEdit} />
         <Button
           icon="pi pi-times"
           severity="secondary"

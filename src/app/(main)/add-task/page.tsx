@@ -32,7 +32,10 @@ export default function AddTaskPage() {
 
   const handleAdd = () => {
     const text = draftText.trim();
-    if (!text) return;
+    if (!text) {
+      notify("Enter what you want to get done first", "warn");
+      return;
+    }
     createTask.mutate(
       { text, date: targetDate, notify: draftNotify },
       {
