@@ -144,16 +144,18 @@ h3 {
   box-shadow: none !important;
 }
 
-/* Secondary reads as an outlined button, not a flat gray block */
+/* Secondary reads as a clearly-defined outlined button, not a flat block
+   that blends into the white card behind it */
 .p-button.p-button-secondary:not(.p-button-text):not(.p-button-outlined) {
   background: var(--color-surface) !important;
-  border: 1px solid var(--color-border-strong) !important;
+  border: 1.5px solid var(--color-text-faint) !important;
   color: var(--color-text) !important;
+  box-shadow: var(--shadow-sm) !important;
 }
 
 .p-button.p-button-secondary:not(.p-button-text):not(.p-button-outlined):not(.p-disabled):hover {
   background: var(--color-bg) !important;
-  border-color: var(--color-text-faint) !important;
+  border-color: var(--color-text-muted) !important;
 }
 
 /* Icon-only ghost buttons (row actions) get a compact circular hover target */
