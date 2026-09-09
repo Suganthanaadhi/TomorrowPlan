@@ -3,6 +3,7 @@ import webpush from "web-push";
 import { prisma } from "@/lib/prisma";
 import { toDbDate } from "@/lib/serialize";
 import { currentTimeInTimezone, isWithinWindow, todayInTimezone } from "@/lib/reminder-time";
+import { sendToSubscriptions } from "@/lib/push-send";
 
 const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY;
 const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY;
@@ -59,23 +60,13 @@ export async function GET(request: NextRequest) {
         : `Today: ${tasksToday.map((t) => t.text).join(", ")}`;
     const payload = JSON.stringify({ title: "TomorrowPlan", body });
 
-    for (const sub of user.subscriptions) {
-      try {
-        await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          payload,
-        );
-        sent++;
-      } catch (err) {
-        const statusCode = (err as { statusCode?: number }).statusCode;
-        const errBody = (err as { body?: string }).body;
-        console.error("send-reminders push failed", statusCode, errBody);
-        errors.push({ statusCode, body: errBody, message: (err as Error).message });
-        if (statusCode === 404 || statusCode === 410) {
-          await prisma.pushSubscription.delete({ where: { id: sub.id } }).catch(() => {});
-        }
-      }
-    }
+    const result = await sendToSubscriptions(
+      user.subscriptions,
+      payload,
+      "send-reminders push failed",
+    );
+    sent += result.sent;
+    errors.push(...result.errors);
 
     await prisma.reminderLog.create({
       data: { userId: user.id, date: todayDate, kind: "PLAN" },

@@ -9,10 +9,3 @@ export type Task = {
   createdAt: string;
   updatedAt: string;
 };
-
-export type SessionUser = {
-  id: string;
-  username: string;
-  email: string;
-  timezone: string;
-};
