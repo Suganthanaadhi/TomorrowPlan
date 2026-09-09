@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import type { ProfileSettings } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 import { Card } from "primereact/card";
@@ -37,6 +38,8 @@ export default function ProfilePage() {
   const [pushBusy, setPushBusy] = useState(false);
 
   const [username, setUsername] = useState<string | null>(null);
+  const [draftUsername, setDraftUsername] = useState("");
+  const [isEditingUsername, setIsEditingUsername] = useState(false);
   const [savingUsername, setSavingUsername] = useState(false);
 
   const [timezone, setTimezone] = useState<string | null>(null);
@@ -52,19 +55,21 @@ export default function ProfilePage() {
 
   const [deleting, setDeleting] = useState(false);
 
+  const [syncedProfile, setSyncedProfile] = useState<ProfileSettings | undefined>(undefined);
+
   useEffect(() => {
     getExistingSubscription().then((sub) => setPushEnabled(!!sub));
   }, []);
 
-  useEffect(() => {
-    if (!profileQuery.data) return;
+  if (profileQuery.data && profileQuery.data !== syncedProfile) {
+    setSyncedProfile(profileQuery.data);
     if (username === null) setUsername(profileQuery.data.username);
     if (timezone === null) setTimezone(profileQuery.data.timezone);
     setPlanEnabled(profileQuery.data.planReminderEnabled);
     setPlanTime(profileQuery.data.planReminderTime);
     setEodEnabled(profileQuery.data.endOfDayReminderEnabled);
     setEodTime(profileQuery.data.endOfDayReminderTime);
-  }, [profileQuery.data, username, timezone]);
+  }
 
   const handleError = (err: unknown) =>
     notify(err instanceof Error ? err.message : "Something went wrong", "error");
@@ -91,8 +96,17 @@ export default function ProfilePage() {
     }
   };
 
+  const startEditUsername = () => {
+    setDraftUsername(username ?? "");
+    setIsEditingUsername(true);
+  };
+
+  const cancelEditUsername = () => {
+    setIsEditingUsername(false);
+  };
+
   const saveUsername = async () => {
-    const trimmed = username?.trim() ?? "";
+    const trimmed = draftUsername.trim();
     if (!trimmed) {
       notify("Username can't be empty", "warn");
       return;
@@ -105,6 +119,8 @@ export default function ProfilePage() {
     try {
       await updateProfileMutation.mutateAsync({ username: trimmed });
       await updateSession({ username: trimmed });
+      setUsername(trimmed);
+      setIsEditingUsername(false);
       notify("Username updated");
     } catch (err) {
       handleError(err);
@@ -196,20 +212,43 @@ export default function ProfilePage() {
       <Card title="Account" className={`${styles.card} ${styles.fullWidth}`}>
         <div className={styles.field}>
           <label htmlFor="username">Username</label>
-          <div className={styles.inlineRow}>
-            <InputText
-              id="username"
-              value={username ?? ""}
-              onChange={(e) => setUsername(e.target.value)}
-              className={styles.inlineInput}
-            />
-            <Button
-              icon="pi pi-check"
-              onClick={saveUsername}
-              loading={savingUsername}
-              aria-label="Save username"
-            />
-          </div>
+          {isEditingUsername ? (
+            <div className={styles.inlineRow}>
+              <InputText
+                id="username"
+                value={draftUsername}
+                onChange={(e) => setDraftUsername(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && saveUsername()}
+                className={styles.inlineInput}
+                autoFocus
+              />
+              <Button
+                icon="pi pi-check"
+                severity="success"
+                text
+                onClick={saveUsername}
+                loading={savingUsername}
+                aria-label="Save username"
+              />
+              <Button
+                icon="pi pi-times"
+                severity="secondary"
+                text
+                onClick={cancelEditUsername}
+                aria-label="Cancel"
+              />
+            </div>
+          ) : (
+            <div className={styles.inlineRow}>
+              <span className={styles.inlineInput}>{username}</span>
+              <Button
+                icon="pi pi-pencil"
+                text
+                onClick={startEditUsername}
+                aria-label="Edit username"
+              />
+            </div>
+          )}
         </div>
 
         <div className={styles.row}>
